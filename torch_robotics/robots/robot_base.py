@@ -24,7 +24,7 @@ class RobotBase(ABC):
             link_names_for_self_collision_checking=None,
             link_names_pairs_for_self_collision_checking=None,
             link_idxs_for_self_collision_checking=None,
-            self_collision_margin_robot=0.001,
+            self_collision_margin_robot=0.3,#这里是碰撞检测大小？
             link_names_for_self_collision_checking_with_grasped_object=None,
             self_collision_margin_grasped_object=0.05,
             num_interpolated_points_for_self_collision_checking=1,

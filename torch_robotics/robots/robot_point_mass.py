@@ -14,13 +14,14 @@ class RobotPointMass(RobotBase):
 
     def __init__(self,
                  name='RobotPointMass',
-                 q_limits=torch.tensor([[-1, -1], [1, 1]]),  # configuration space limits
+                 q_limits=torch.tensor([[0,0], [3.62, 8.2]]),  # configuration space limits
+                 #q_limits=torch.tensor([[-1, -1], [1, 1]]),  # configuration space limits
                  **kwargs):
         super().__init__(
             name=name,
             q_limits=to_torch(q_limits, **kwargs['tensor_args']),
             link_names_for_object_collision_checking=['link_0'],
-            link_margins_for_object_collision_checking=[0.01],
+            link_margins_for_object_collision_checking=[0.01],#碰撞边距
             link_idxs_for_object_collision_checking=[0],
             num_interpolated_points_for_object_collision_checking=1,
             **kwargs
@@ -37,7 +38,7 @@ class RobotPointMass(RobotBase):
             q = to_numpy(q)
             if q.ndim == 1:
                 if self.q_dim == 2:
-                    circle1 = plt.Circle(q, margin, color=color, zorder=10)
+                    circle1 = plt.Circle(q, margin, color=color, zorder=15)
                     ax.add_patch(circle1)
                 elif self.q_dim == 3:
                     plot_sphere(ax, q, np.zeros_like(q), margin, cmap)
@@ -49,7 +50,7 @@ class RobotPointMass(RobotBase):
                     circ = []
                     for q_ in q:
                         circ.append(plt.Circle(q_, margin, color=color))
-                        coll = mcoll.PatchCollection(circ, zorder=10)
+                        coll = mcoll.PatchCollection(circ, zorder=15)
                         ax.add_collection(coll)
                 elif q.shape[-1] == 3:
                     # ax.scatter(q[:, 0], q[:, 1], q[:, 2], color=color, s=10 ** 2, zorder=10)

@@ -24,11 +24,11 @@ class EnvSpheres3DExtraObjects(EnvSpheres3D):
                     ]),
                 np.array(
                     [
-                        0.15,
-                        0.15,
-                        0.15,
-                        0.15,
-                        0.15,
+                        0.01,
+                        0.01,
+                        0.01,
+                        0.01,
+                        0.01,
                     ]
                 )
                 ,

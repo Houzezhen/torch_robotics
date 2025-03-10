@@ -45,7 +45,7 @@ class PlanningVisualizer:
             for i in range(len(trajs_coll_idxs) + len(trajs_free_idxs)):
                 kwargs['colors'].append(self.colors['collision'] if i in trajs_coll_idxs else self.colors['free'])
         self.robot.render_trajectories(ax, trajs=trajs, **kwargs)
-        if traj_best is not None:
+        if traj_best is not None:#最佳路径蓝色
             kwargs['colors'] = ['blue']
             self.robot.render_trajectories(ax, trajs=traj_best.unsqueeze(0), **kwargs)
 
@@ -258,6 +258,7 @@ def create_animation_video(fig, animate_fn, anim_time=5, n_frames=100, video_fil
 
     str_start = "Saving video..."
     print(f'{str_start}...')
+    print(os.path.join(video_filepath))
     ani.save(os.path.join(video_filepath), fps=max(1, int(n_frames / anim_time)), dpi=90)
     print(f'...finished {str_start}')
 

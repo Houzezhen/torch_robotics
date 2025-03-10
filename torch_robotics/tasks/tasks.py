@@ -248,7 +248,7 @@ class PlanningTask(Task):
         # While the optimized trajectory via points are not at a 0 margin from the object, the interpolated via points
         # might be. A 0 margin guarantees that we do not discard those trajectories, while ensuring they are not in
         # collision (margin < 0).
-        trajs_waypoints_collisions = self.compute_collision(trajs_interpolated, margin=0.)
+        trajs_waypoints_collisions = self.compute_collision(trajs_interpolated, margin=0.05)
 
         if trajs.ndim == 4:
             trajs_waypoints_collisions = einops.rearrange(trajs_waypoints_collisions, '(N B) H -> N B H', N=N, B=B)
@@ -269,7 +269,12 @@ class PlanningTask(Task):
             trajs_free_tmp_position = self.robot.get_position(trajs_free_tmp)
             trajs_free_inside_joint_limits_idxs = torch.logical_and(
                 trajs_free_tmp_position >= self.robot.q_min,
-                trajs_free_tmp_position <= self.robot.q_max).all(dim=-1).all(dim=-1)
+               trajs_free_tmp_position <= self.robot.q_max).all(dim=-1).all(dim=-1)
+            # 通过广播机制快速生成目标形状
+           # trajs_free_inside_joint_limits_idxs = trajs_free_tmp_position.new_ones(
+            #    trajs_free_tmp_position.shape[:-2],  # 移除最后两个验证维度（时间步×关节）
+            #    dtype=torch.bool
+            #)
             trajs_free_inside_joint_limits_idxs = torch.atleast_1d(trajs_free_inside_joint_limits_idxs)
             trajs_free_idxs_try = trajs_free_idxs[torch.argwhere(trajs_free_inside_joint_limits_idxs).squeeze()]
             if trajs_free_idxs_try.nelement() == 0:
@@ -297,6 +302,7 @@ class PlanningTask(Task):
             trajs_coll = trajs[trajs_coll_idxs.squeeze(), ...]
             if trajs_coll.ndim == 2:
                 trajs_coll = trajs_coll.unsqueeze(0)
+
 
         if trajs_coll.nelement() == 0:
             trajs_coll = None

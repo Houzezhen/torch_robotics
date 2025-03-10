@@ -37,7 +37,7 @@ class RobotPanda(RobotBase):
             gripper=self.gripper, device=tensor_args['device'], grasped_object=grasped_object
         )
 
-        self.jl_lower, self.jl_upper, _, _ = self.diff_panda.get_joint_limit_array()
+        self.jl_lower, self.jl_upper, _, _ = self.diff_panda.get_joint_limit_array()#关节限制
         q_limits = torch.tensor(np.array([self.jl_lower, self.jl_upper]), **tensor_args)
 
         #############################################
