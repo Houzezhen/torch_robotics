@@ -25,16 +25,16 @@ class EnvSpheres3D(EnvBase):
                     [0.1, 0.55, 0.35],
                     ]),
                 torch.tensor([
-                    0.0,
-                    0.01,
-                    0.01,
                     0.15,
-                    0.01,
-                    0.01,
-                    0.01,
-                    0.01,
-                    0.01,
-                    0.01
+                    0.15,
+                    0.15,
+                    0.15,
+                    0.15,
+                    0.15,
+                    0.15,
+                    0.15,
+                    0.15,
+                    0.15
                 ]),
                 tensor_args=tensor_args)
 
@@ -51,28 +51,28 @@ class EnvSpheres3D(EnvBase):
 
     def get_gpmp2_params(self, robot=None):
         params = dict(
-            opt_iters=250,
+            opt_iters=500,
             num_samples=64,
             sigma_start=1e-3,
-            sigma_gp=1e-1,
+            sigma_gp=5e-1,#1e-1
             sigma_goal_prior=1e-3,
-            sigma_coll=1e-4,
-            step_size=1e0,
+            sigma_coll=5e-2,
+            step_size=0.001,
             sigma_start_init=1e-4,
             sigma_goal_init=1e-4,
             sigma_gp_init=0.1,
             sigma_start_sample=1e-3,
             sigma_goal_sample=1e-3,
             solver_params={
-                'delta': 1e-2,
+                'delta': 0.01,
                 'trust_region': True,
                 'sparse_computation': False,
                 'sparse_computation_block_diag': False,
                 'method': 'cholesky',
                 # 'method': 'cholesky-sparse',
-                # 'method': 'inverse',
+                #'method': 'inverse',
             },
-            stop_criteria=0.1,
+            stop_criteria=0.1,#0.1
         )
         if isinstance(robot, RobotPanda):
             return params
@@ -81,8 +81,8 @@ class EnvSpheres3D(EnvBase):
 
     def get_rrt_connect_params(self, robot=None):
         params = dict(
-            n_iters=10000,
-            step_size=torch.pi/10,
+            n_iters=5000,
+            step_size=torch.pi/30,
             n_radius=torch.pi/4,
             n_pre_samples=50000,
 

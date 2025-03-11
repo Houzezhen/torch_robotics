@@ -101,33 +101,43 @@ class PlanningTask(Task):
             return self.robot.random_q(**kwargs)
 
     def random_coll_free_q(self, n_samples=1, max_samples=1000, max_tries=1000):
-        # Random position in configuration space not in collision
-        reject = True
         samples = torch.zeros((n_samples, self.robot.q_dim), **self.tensor_args)
         idx_begin = 0
+        reject = True
+
         for i in range(max_tries):
+            # 批量生成候选样本
             qs = self.robot.random_q(max_samples)
-            in_collision = self.compute_collision(qs).squeeze()
-            idxs_not_in_collision = torch.argwhere(in_collision == False).squeeze()
-            if idxs_not_in_collision.nelement() == 0:
-                # all points are in collision
+
+            # 联合约束检查：关节限制 + 碰撞检测
+            joint_constraint = torch.all((qs >= self.robot.q_min) & (qs <= self.robot.q_max),
+                                         dim=1)  # ‌:ml-citation{ref="2,4" data="citationList"}
+            collision_free = ~self.compute_collision(qs).squeeze()
+            valid_mask = joint_constraint & collision_free  # ‌:ml-citation{ref="2,3" data="citationList"}
+
+            valid_idxs = torch.argwhere(valid_mask).squeeze()
+            if valid_idxs.nelement() == 0:
                 continue
-            if idxs_not_in_collision.nelement() == 1:
-                idxs_not_in_collision = [idxs_not_in_collision]
-            idx_random = torch.randperm(len(idxs_not_in_collision))[:n_samples]
-            free_qs = qs[idxs_not_in_collision[idx_random]]
+
+            # 随机选择有效样本
+            if valid_idxs.ndim == 0 or valid_idxs.nelement() == 1:
+                valid_idxs = valid_idxs.unsqueeze(0)
+            idx_random = torch.randperm(len(valid_idxs))[:n_samples]
+            free_qs = qs[valid_idxs[idx_random]]
+
+            # 填充结果
             idx_end = min(idx_begin + free_qs.shape[0], samples.shape[0])
             samples[idx_begin:idx_end] = free_qs[:idx_end - idx_begin]
             idx_begin = idx_end
-            if idx_end >= n_samples:
+
+            if idx_begin >= n_samples:
                 reject = False
                 break
 
         if reject:
-            sys.exit("Could not find a collision free configuration")
+            raise RuntimeError("Could not find collision-free and joint-limited configurations")
 
         return samples.squeeze()
-
     def compute_collision(self, x, **kwargs):
         q_pos = self.robot.get_position(x)
         return self._compute_collision_or_cost(q_pos, field_type='occupancy', **kwargs)
