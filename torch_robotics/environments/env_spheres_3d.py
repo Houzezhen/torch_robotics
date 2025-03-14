@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 
 from torch_robotics.environments.env_base import EnvBase
 from torch_robotics.environments.primitives import ObjectField, MultiSphereField
-from torch_robotics.robots import RobotPointMass, RobotPanda
+from torch_robotics.robots import RobotPointMass, RobotPanda, RobotUr10
 from torch_robotics.torch_utils.torch_utils import DEFAULT_TENSOR_ARGS
 from torch_robotics.visualizers.planning_visualizer import create_fig_and_axes
 
@@ -25,16 +25,16 @@ class EnvSpheres3D(EnvBase):
                     [0.1, 0.55, 0.35],
                     ]),
                 torch.tensor([
+                    0.0,
+                    0.0,
+                    0.01,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
                     0.15,
-                    0.15,
-                    0.15,
-                    0.15,
-                    0.15,
-                    0.15,
-                    0.15,
-                    0.15,
-                    0.15,
-                    0.15
+                    0.0
                 ]),
                 tensor_args=tensor_args)
 
@@ -54,7 +54,7 @@ class EnvSpheres3D(EnvBase):
             opt_iters=500,
             num_samples=64,
             sigma_start=1e-3,
-            sigma_gp=5e-1,#1e-1
+            sigma_gp=1e-1,#1e-1
             sigma_goal_prior=1e-3,
             sigma_coll=5e-2,
             step_size=0.001,
@@ -74,7 +74,7 @@ class EnvSpheres3D(EnvBase):
             },
             stop_criteria=0.1,#0.1
         )
-        if isinstance(robot, RobotPanda):
+        if isinstance(robot, (RobotPanda,RobotUr10)):
             return params
         else:
             raise NotImplementedError
@@ -88,7 +88,7 @@ class EnvSpheres3D(EnvBase):
 
             max_time=180
         )
-        if isinstance(robot, RobotPanda):
+        if isinstance(robot, (RobotPanda,RobotUr10)):
             return params
         else:
             raise NotImplementedError

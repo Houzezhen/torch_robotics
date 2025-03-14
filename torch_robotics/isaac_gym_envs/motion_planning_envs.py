@@ -176,7 +176,8 @@ class PandaMotionPlanningIsaacGymEnv:
 
     def __init__(self, env, robot, task,
                  asset_root="/home/carvalho/Projects/MotionPlanningDiffusion/mpd/deps/isaacgym/assets",
-                 franka_asset_file="urdf/franka_description/robots/franka_panda.urdf",
+                 #franka_asset_file="urdf/franka_description/robots/franka_panda.urdf",
+                 franka_asset_file="urdf/ur10/urdf/ur10.urdf",
                  controller_type='position',
                  num_envs=8,
                  all_robots_in_one_env=False,
@@ -274,7 +275,7 @@ class PandaMotionPlanningIsaacGymEnv:
         asset_options.flip_visual_attachments = True
         franka_asset = self.gym.load_asset(self.sim, asset_root, franka_asset_file, asset_options)
 
-        self.franka_hand = 'panda_hand'
+        self.franka_hand = 'ee_link'
 
         # configure franka dofs
         franka_dof_props = self.gym.get_asset_dof_properties(franka_asset)
@@ -285,22 +286,22 @@ class PandaMotionPlanningIsaacGymEnv:
 
         # use position or velocity drive for all joint dofs
         if self.controller_type == 'position':
-            franka_dof_props["driveMode"][:7].fill(gymapi.DOF_MODE_POS)
-            franka_dof_props["stiffness"][:7].fill(400.0)
+            franka_dof_props["driveMode"][:6].fill(gymapi.DOF_MODE_POS)
+            franka_dof_props["stiffness"][:6].fill(400.0)
             # franka_dof_props["damping"][:7].fill(40.0)
             # franka_dof_props["stiffness"][:7] = np.array([400.0, 300.0, 300.0, 200.0, 150.0, 100.0, 50.0])
-            franka_dof_props["damping"][:7] = 2. * np.sqrt(franka_dof_props["stiffness"][:7])
+            franka_dof_props["damping"][:6] = 2. * np.sqrt(franka_dof_props["stiffness"][:6])
         elif self.controller_type == 'velocity':
-            franka_dof_props["driveMode"][:7].fill(gymapi.DOF_MODE_VEL)
-            franka_dof_props["stiffness"][:7].fill(0.0)
-            franka_dof_props["damping"][:7].fill(600.0)
+            franka_dof_props["driveMode"][:6].fill(gymapi.DOF_MODE_VEL)
+            franka_dof_props["stiffness"][:6].fill(0.0)
+            franka_dof_props["damping"][:6].fill(600.0)
         else:
             raise NotImplementedError
 
         # use position control for grippers
-        franka_dof_props["driveMode"][7:].fill(gymapi.DOF_MODE_POS)
-        franka_dof_props["stiffness"][7:].fill(800.0)
-        franka_dof_props["damping"][7:].fill(40.0)
+        franka_dof_props["driveMode"][6:].fill(gymapi.DOF_MODE_POS)
+        franka_dof_props["stiffness"][6:].fill(800.0)
+        franka_dof_props["damping"][6:].fill(40.0)
 
         # default dof states and position targets
         self.franka_num_dofs = self.gym.get_asset_dof_count(franka_asset)
@@ -308,7 +309,7 @@ class PandaMotionPlanningIsaacGymEnv:
         # default_dof_pos[:7] = franka_mids[:7]
 
         # grippers open
-        self.default_dof_pos[7:] = self.franka_upper_limits[7:]
+        self.default_dof_pos[6:] = self.franka_upper_limits[6:]
 
         self.default_dof_state = np.zeros(self.franka_num_dofs, gymapi.DofState.dtype)
         self.default_dof_state["pos"] = self.default_dof_pos
@@ -442,8 +443,8 @@ class PandaMotionPlanningIsaacGymEnv:
         # get dof state tensor
         _dof_states = self.gym.acquire_dof_state_tensor(self.sim)
         self.dof_states = gymtorch.wrap_tensor(_dof_states)
-        self.dof_pos = self.dof_states[:, 0].view(self.num_envs, 9, 1)
-        self.dof_vel = self.dof_states[:, 1].view(self.num_envs, 9, 1)
+        self.dof_pos = self.dof_states[:, 0].view(self.num_envs, 6, 1)
+        self.dof_vel = self.dof_states[:, 1].view(self.num_envs, 6, 1)
 
         ###############################################################################################################
         self.step_idx = 0
@@ -453,7 +454,7 @@ class PandaMotionPlanningIsaacGymEnv:
 
         if start_joint_positions is None:
             start_joint_positions = torch.zeros((self.num_envs, self.franka_num_dofs - 2), **self.tensor_args)  # w/o gripper
-            start_joint_positions[..., :7] = to_torch(self.default_dof_pos[:7], **self.tensor_args)
+            start_joint_positions[..., :6] = to_torch(self.default_dof_pos[:6], **self.tensor_args)
 
         assert start_joint_positions.ndim == 2
 
@@ -466,15 +467,15 @@ class PandaMotionPlanningIsaacGymEnv:
 
         dof_pos_tensor = torch.zeros((self.num_envs, self.franka_num_dofs), **self.tensor_args)
         if self.show_goal_configuration:
-            dof_pos_tensor[:-1, :7] = start_joint_positions
+            dof_pos_tensor[:-1, :6] = start_joint_positions
             assert goal_joint_position is not None
             self.goal_joint_position = goal_joint_position
-            dof_pos_tensor[-1, :7] = goal_joint_position
+            dof_pos_tensor[-1, :6] = goal_joint_position
         else:
-            dof_pos_tensor[..., :7] = start_joint_positions
+            dof_pos_tensor[..., :6] = start_joint_positions
 
         # grippers open
-        dof_pos_tensor[..., 7:] = to_torch(self.franka_upper_limits, **self.tensor_args)[None, 7:]
+        dof_pos_tensor[..., 6:] = to_torch(self.franka_upper_limits, **self.tensor_args)[None, 6:]
 
         # dof_state_tensor[..., :self.franka_num_dofs] = dof_pos_tensor
 
@@ -487,7 +488,7 @@ class PandaMotionPlanningIsaacGymEnv:
             joint_state_des = self.gym.get_actor_dof_states(env, handle, gymapi.STATE_ALL)
             joint_state_des['pos'] = np.zeros_like(joint_state_des['pos'])
             joint_state_des['vel'] = np.zeros_like(joint_state_des['vel'])
-            joint_state_des['pos'][:7] = to_numpy(joints_pos[:7])
+            joint_state_des['pos'][:6] = to_numpy(joints_pos[:6])
             joint_state_des['pos'][-1] = joints_pos[-1]
             joint_state_des['pos'][-2] = joints_pos[-2]
             self.gym.set_actor_dof_states(env, handle, joint_state_des, gymapi.STATE_ALL)
@@ -502,7 +503,7 @@ class PandaMotionPlanningIsaacGymEnv:
         # refresh tensors
         self.gym.refresh_dof_state_tensor(self.sim)
         # Get current joint states
-        joint_states_curr = gymtorch.wrap_tensor(self.gym.acquire_dof_state_tensor(self.sim)).view(self.num_envs, 9, 2)
+        joint_states_curr = gymtorch.wrap_tensor(self.gym.acquire_dof_state_tensor(self.sim)).view(self.num_envs, 6, 2)
         if self.show_goal_configuration:
             joint_states_curr = joint_states_curr[:-1, ...]
         return joint_states_curr
@@ -520,18 +521,18 @@ class PandaMotionPlanningIsaacGymEnv:
         # Deploy control based on type
         action_dof = torch.zeros_like(self.dof_pos).squeeze(-1)
         if self.show_goal_configuration:
-            action_dof[:-1, :7] = actions[..., :7]
+            action_dof[:-1, :6] = actions[..., :6]
             if self.controller_type == 'position':
-                action_dof[-1, :7] = self.goal_joint_position
+                action_dof[-1, :6] = self.goal_joint_position
             elif self.controller_type == 'velocity':
-                action_dof[-1, :7] = torch.zeros_like(self.goal_joint_position)
+                action_dof[-1, :6] = torch.zeros_like(self.goal_joint_position)
             else:
                 raise NotImplementedError
         else:
-            action_dof[..., :7] = actions[..., :7]
+            action_dof[..., :6] = actions[..., :6]
 
         # gripper is open
-        action_dof[..., 7:9] = torch.Tensor([[0.04, 0.04]] * self.num_envs)
+        #action_dof[..., 6:6] = torch.Tensor([[0.04, 0.04]] * self.num_envs)
 
         ###############################################################################################################
         # Deploy actions
@@ -606,7 +607,7 @@ class PandaMotionPlanningIsaacGymEnv:
                 if self.show_collision_spheres:
                     # TODO - tensor version. It is currently very slow.
                     joint_state_curr = self.gym.get_actor_dof_states(env, franka_handle, gymapi.STATE_ALL)
-                    joint_pos_curr = to_torch(joint_state_curr['pos'][:7], **self.tensor_args)
+                    joint_pos_curr = to_torch(joint_state_curr['pos'][:6], **self.tensor_args)
                     fk_link_pos = self.robot.fk_map_collision(joint_pos_curr)
                     fk_link_pos = fk_link_pos[..., self.robot.link_idxs_for_object_collision_checking, :]
                     fk_link_pos = interpolate_points_v1(fk_link_pos, self.robot.num_interpolated_points_for_object_collision_checking).squeeze(0)
@@ -634,7 +635,7 @@ class PandaMotionPlanningIsaacGymEnv:
         self.step_idx += 1
 
         # Get current joint states
-        joint_states_curr = gymtorch.wrap_tensor(self.gym.acquire_dof_state_tensor(self.sim)).view(self.num_envs, 9, 2)
+        joint_states_curr = gymtorch.wrap_tensor(self.gym.acquire_dof_state_tensor(self.sim)).view(self.num_envs, 6, 2)
         if self.show_goal_configuration:
             joint_states_curr = joint_states_curr[:-1, ...]
         return joint_states_curr, envs_with_robot_in_contact

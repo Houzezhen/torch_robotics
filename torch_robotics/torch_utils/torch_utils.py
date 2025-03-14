@@ -8,7 +8,7 @@ import torch
 
 def get_torch_device(device='cuda'):
     if 'cuda' in device and torch.cuda.is_available():
-        device = 'cuda'
+        device = 'cuda:1'
     elif 'mps' in device:
         device = 'mps'
     else:
