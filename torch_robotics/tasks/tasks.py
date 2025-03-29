@@ -32,7 +32,7 @@ class PlanningTask(Task):
         super().__init__(**kwargs)
         self.ws_limits = self.env.limits if ws_limits is None else ws_limits
         self.ws_min = self.ws_limits[0]
-        self.ws_max = self.ws_limits[1]
+        self.ws_max = self.ws_limits[1]    #边界条件
 
         # Optional: use an occupancy map for collision checking -- useful for sampling-based algorithms
         # A precomputed collision map is faster when checking for collisions, in comparison to computing the distances
@@ -92,7 +92,7 @@ class PlanningTask(Task):
         return self._collision_fields_extra_objects
 
     def distance_q(self, q1, q2):
-        return self.robot.distance_q(q1, q2)
+        return self.robot.distance_q(q1, q2)#欧式距离
 
     def sample_q(self, without_collision=True, **kwargs):
         if without_collision:
@@ -111,9 +111,9 @@ class PlanningTask(Task):
 
             # 联合约束检查：关节限制 + 碰撞检测
             joint_constraint = torch.all((qs >= self.robot.q_min) & (qs <= self.robot.q_max),
-                                         dim=1)  # ‌:ml-citation{ref="2,4" data="citationList"}
+                                         dim=1)
             collision_free = ~self.compute_collision(qs).squeeze()
-            valid_mask = joint_constraint & collision_free  # ‌:ml-citation{ref="2,3" data="citationList"}
+            valid_mask = joint_constraint & collision_free
 
             valid_idxs = torch.argwhere(valid_mask).squeeze()
             if valid_idxs.nelement() == 0:
@@ -139,13 +139,13 @@ class PlanningTask(Task):
 
         return samples.squeeze()
     def compute_collision(self, x, **kwargs):
-        q_pos = self.robot.get_position(x)
+        q_pos = self.robot.get_position(x)   #取出机器人维度对应的参数
         return self._compute_collision_or_cost(q_pos, field_type='occupancy', **kwargs)
 
     def compute_collision_cost(self, x, **kwargs):
         q_pos = self.robot.get_position(x)
         return self._compute_collision_or_cost(q_pos, field_type='sdf', **kwargs)
-
+#碰撞计算
     def _compute_collision_or_cost(self, q, field_type='occupancy', **kwargs):
         # q.shape needs to be reshaped to (batch, horizon, q_dim)
         q_original_shape = q.shape
@@ -214,21 +214,21 @@ class PlanningTask(Task):
 
             # forward kinematics
             fk_collision_pos = self.robot.fk_map_collision(q)  # batch, horizon, taskspaces, x_dim
-
+            #求正解
             ########################
-            # Self collision
+            # Self collision自碰撞
             if self.df_collision_self is not None:
                 cost_collision_self = self.df_collision_self.compute_cost(q, fk_collision_pos, field_type=field_type, **kwargs)
             else:
                 cost_collision_self = 0
 
-            # Object collision
+            # Object collision#障碍物碰撞
             if self.df_collision_objects is not None:
                 cost_collision_objects = self.df_collision_objects.compute_cost(q, fk_collision_pos, field_type=field_type, **kwargs)
             else:
                 cost_collision_objects = 0
 
-            # Workspace boundaries
+            # Workspace boundaries边界检测
             if self.df_collision_ws_boundaries is not None:
                 cost_collision_border = self.df_collision_ws_boundaries.compute_cost(q, fk_collision_pos, field_type=field_type, **kwargs)
             else:
@@ -237,7 +237,7 @@ class PlanningTask(Task):
             if field_type == 'occupancy':
                 collisions = cost_collision_self | cost_collision_objects | cost_collision_border
             else:
-                collisions = cost_collision_self + cost_collision_objects + cost_collision_border
+                collisions = cost_collision_self + cost_collision_objects + cost_collision_border   #碰撞累积
 
         return collisions
 

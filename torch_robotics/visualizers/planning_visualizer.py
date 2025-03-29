@@ -259,7 +259,7 @@ def create_animation_video(fig, animate_fn, anim_time=5, n_frames=100, video_fil
     str_start = "Saving video..."
     print(f'{str_start}...')
     print(os.path.join(video_filepath))
-    ani.save(os.path.join(video_filepath), fps=max(1, int(n_frames / anim_time)), dpi=90)
+    ani.save(os.path.join(video_filepath), fps=max(1, int(n_frames / anim_time)), dpi=100)
     print(f'...finished {str_start}')
 
 

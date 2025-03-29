@@ -276,7 +276,7 @@ class PandaMotionPlanningIsaacGymEnv:
 
         self.franka_hand = 'panda_hand'
 
-        # configure franka dofs
+        # configure franka dofs  包含关节属性（如刚度、阻尼、摩擦、速度/力限制等）的数据结构。
         franka_dof_props = self.gym.get_asset_dof_properties(franka_asset)
         self.franka_lower_limits = franka_dof_props["lower"]
         self.franka_upper_limits = franka_dof_props["upper"]
@@ -285,9 +285,9 @@ class PandaMotionPlanningIsaacGymEnv:
 
         # use position or velocity drive for all joint dofs
         if self.controller_type == 'position':
-            franka_dof_props["driveMode"][:7].fill(gymapi.DOF_MODE_POS)
-            franka_dof_props["stiffness"][:7].fill(400.0)
-            # franka_dof_props["damping"][:7].fill(40.0)
+            franka_dof_props["driveMode"][:7].fill(gymapi.DOF_MODE_POS)#驱动模式 位置
+            franka_dof_props["stiffness"][:7].fill(400.0)    #刚度
+            # franka_dof_props["damping"][:7].fill(40.0)#阻尼
             # franka_dof_props["stiffness"][:7] = np.array([400.0, 300.0, 300.0, 200.0, 150.0, 100.0, 50.0])
             franka_dof_props["damping"][:7] = 2. * np.sqrt(franka_dof_props["stiffness"][:7])
         elif self.controller_type == 'velocity':
@@ -327,7 +327,7 @@ class PandaMotionPlanningIsaacGymEnv:
         plane_params.normal = gymapi.Vec3(0, 0, 1)
         self.gym.add_ground(self.sim, plane_params)
 
-        # robots pose
+        # robots pose   #打不开？？？
         franka_pose = gymapi.Transform()
         franka_pose.p = gymapi.Vec3(0, 0, 0)
 
@@ -337,7 +337,7 @@ class PandaMotionPlanningIsaacGymEnv:
         self.hand_idxs = []
 
         color_obj_fixed = gymapi.Vec3(220. / 255., 220. / 255., 220. / 255.)
-        color_obj_extra = gymapi.Vec3(1., 0., 0.)
+        color_obj_extra = gymapi.Vec3(1., 0., 0.)#红色
 
         # create env
         if self.all_robots_in_one_env:
@@ -383,12 +383,13 @@ class PandaMotionPlanningIsaacGymEnv:
             rb_names = self.gym.get_actor_rigid_body_names(env, franka_handle)
             for j in range(len(rb_names)):
                 rb_idx = self.gym.get_actor_rigid_body_index(env, franka_handle, j, gymapi.DOMAIN_SIM)
+                # 获得刚体名称
                 self.map_rigid_body_idxs_to_env_idx[rb_idx] = i
 
             # color franka
             n_rigid_bodies = self.gym.get_actor_rigid_body_count(env, franka_handle)
             if self.show_goal_configuration and i == self.num_envs - 1:
-                color = gymapi.Vec3(128/255., 0., 128/255.)  # purple
+                color = gymapi.Vec3(128/255., 0., 128/255.)  # purple#紫色  目标机械臂位置
                 for j in range(n_rigid_bodies):
                     self.gym.set_rigid_body_color(env, franka_handle, j, gymapi.MESH_VISUAL_AND_COLLISION, color)
 
@@ -407,8 +408,9 @@ class PandaMotionPlanningIsaacGymEnv:
         # point camera at middle env
         # cam_pos = gymapi.Vec3(1.75, 0, 1.25)
         # cam_target = gymapi.Vec3(-3, 0, -1.25)
-        cam_pos = gymapi.Vec3(0, 1.75, 1.25)
+        cam_pos = gymapi.Vec3(0, 3, 1.25)
         cam_target = gymapi.Vec3(0, -3, -1.25)
+        #摄像头位置  摄像头朝向
         if len(self.envs) == 1:
             self.middle_env = self.envs[0]
         else:
@@ -522,7 +524,7 @@ class PandaMotionPlanningIsaacGymEnv:
         if self.show_goal_configuration:
             action_dof[:-1, :7] = actions[..., :7]
             if self.controller_type == 'position':
-                action_dof[-1, :7] = self.goal_joint_position
+                action_dof[-1, :7] = self.goal_joint_position  #最后一帧为目标位置
             elif self.controller_type == 'velocity':
                 action_dof[-1, :7] = torch.zeros_like(self.goal_joint_position)
             else:
@@ -589,6 +591,9 @@ class PandaMotionPlanningIsaacGymEnv:
                 # End-effector frame
                 body_dict = self.gym.get_actor_rigid_body_dict(env, franka_handle)
                 props = self.gym.get_actor_rigid_body_states(env, franka_handle, gymapi.STATE_POS)
+                #props["pose"]["p"]=(0.0,0.,-1.0)#xyz
+                #self.gym.set_actor_rigid_body_states(env,franka_handle,props,gymapi.STATE_POS)
+                ###############
                 ee_pose = props['pose'][:][body_dict[self.franka_hand]]
                 ee_transform = gymapi.Transform(p=gymapi.Vec3(*ee_pose[0]), r=gymapi.Quat(*ee_pose[1]))
                 # reference frame

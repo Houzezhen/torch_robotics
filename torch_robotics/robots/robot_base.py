@@ -166,7 +166,7 @@ class RobotBase(ABC):
         return acc
 
     def distance_q(self, q1, q2):
-        return torch.linalg.norm(q1 - q2, dim=-1)
+        return torch.linalg.norm(q1 - q2, dim=-1)#欧式距离
 
     def fk_map_collision(self, q, **kwargs):
         if q.ndim == 1:

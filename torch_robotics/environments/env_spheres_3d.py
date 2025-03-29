@@ -25,16 +25,16 @@ class EnvSpheres3D(EnvBase):
                     [0.1, 0.55, 0.35],
                     ]),
                 torch.tensor([
-                    0.0,
-                    0.0,
-                    0.01,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1,
+                    0.1,
                     0.15,
-                    0.0
+                    0.1,
+                    0.15,
+                    0.1
                 ]),
                 tensor_args=tensor_args)
 
@@ -43,7 +43,7 @@ class EnvSpheres3D(EnvBase):
 
         super().__init__(
             name=name,
-            limits=torch.tensor([[-1, -1, -1], [1, 1, 1]], **tensor_args),  # environments limits
+            limits=torch.tensor([[-1, -1, -1], [1, 1, 1]], **tensor_args),  # environments limits   前俩下标数值为平面限制限制，用于边界碰撞检测
             obj_fixed_list=obj_list,
             tensor_args=tensor_args,
             **kwargs
