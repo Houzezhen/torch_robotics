@@ -354,8 +354,9 @@ class CollisionWorkspaceBoundariesDistanceField(CollisionObjectBase):
         signed_distances_bounds_max = self.ws_max - link_pos
         signed_distances_bounds_max = torch.sign(signed_distances_bounds_max) * torch.abs(signed_distances_bounds_max)
         signed_distances_bounds = torch.cat((signed_distances_bounds_min, signed_distances_bounds_max), dim=-1)
-        return signed_distances_bounds.transpose(-2, -1)    # batch_dim x num_sdfs x links
 
+        return signed_distances_bounds.transpose(-2, -1)    # batch_dim x num_sdfs x links
+        #加上移动底盘，不止检测link_pos,还要检测车移动到哪个坐标
 
 class EESE3DistanceField(DistanceField):
 

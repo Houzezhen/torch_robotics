@@ -286,8 +286,10 @@ class DifferentiableTree(torch.nn.Module):
 
         # Create joint state dictionary
         q_dict = {}
+
         for i, body_idx in enumerate(self._controlled_joints):
             q_dict[self._bodies[body_idx].name] = q[:, i].unsqueeze(1)
+            #print( i,"-------------------------------------",body_idx)
 
         # Call forward kinematics on root node
         pose_dict = self._bodies[0].forward_kinematics(q_dict, batch_size)

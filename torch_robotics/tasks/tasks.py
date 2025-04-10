@@ -31,8 +31,8 @@ class PlanningTask(Task):
     ):
         super().__init__(**kwargs)
         self.ws_limits = self.env.limits if ws_limits is None else ws_limits
-        self.ws_min = self.ws_limits[0]
-        self.ws_max = self.ws_limits[1]    #边界条件
+        self.ws_min = self.ws_limits[0]# 0 0
+        self.ws_max = self.ws_limits[1] #3.62  8.2   #边界条件
 
         # Optional: use an occupancy map for collision checking -- useful for sampling-based algorithms
         # A precomputed collision map is faster when checking for collisions, in comparison to computing the distances
@@ -44,7 +44,7 @@ class PlanningTask(Task):
         ################################################################################################
         # Collision fields
         # collision field for self-collision
-        self.df_collision_self = self.robot.df_collision_self
+        self.df_collision_self = self.robot.df_collision_self   #碰撞区域
 
         # collision field for objects
         self.df_collision_objects = CollisionObjectDistanceField(
@@ -110,9 +110,11 @@ class PlanningTask(Task):
             qs = self.robot.random_q(max_samples)
 
             # 联合约束检查：关节限制 + 碰撞检测
-            joint_constraint = torch.all((qs >= self.robot.q_min) & (qs <= self.robot.q_max),
-                                         dim=1)
+            joint_constraint = torch.all((qs >= self.robot.q_min) & (qs <= self.robot.q_max),dim=1)
+
             collision_free = ~self.compute_collision(qs).squeeze()
+
+
             valid_mask = joint_constraint & collision_free
 
             valid_idxs = torch.argwhere(valid_mask).squeeze()
@@ -139,7 +141,8 @@ class PlanningTask(Task):
 
         return samples.squeeze()
     def compute_collision(self, x, **kwargs):
-        q_pos = self.robot.get_position(x)   #取出机器人维度对应的参数
+        q_pos = self.robot.get_position(x)   #取出机器人关节角度值，分成一份一份的
+        #print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",x.shape)
         return self._compute_collision_or_cost(q_pos, field_type='occupancy', **kwargs)
 
     def compute_collision_cost(self, x, **kwargs):
@@ -216,24 +219,25 @@ class PlanningTask(Task):
             fk_collision_pos = self.robot.fk_map_collision(q)  # batch, horizon, taskspaces, x_dim
             #求正解
             ########################
+
             # Self collision自碰撞
             if self.df_collision_self is not None:
                 cost_collision_self = self.df_collision_self.compute_cost(q, fk_collision_pos, field_type=field_type, **kwargs)
             else:
                 cost_collision_self = 0
-
+            #print("cost_collision_self------------",cost_collision_self)
             # Object collision#障碍物碰撞
             if self.df_collision_objects is not None:
                 cost_collision_objects = self.df_collision_objects.compute_cost(q, fk_collision_pos, field_type=field_type, **kwargs)
             else:
                 cost_collision_objects = 0
-
+            #print("cost_collision_objects-------------------",cost_collision_objects)
             # Workspace boundaries边界检测
             if self.df_collision_ws_boundaries is not None:
                 cost_collision_border = self.df_collision_ws_boundaries.compute_cost(q, fk_collision_pos, field_type=field_type, **kwargs)
             else:
                 cost_collision_border = 0
-
+          #  print("cost_collision_border-------------------", cost_collision_border)
             if field_type == 'occupancy':
                 collisions = cost_collision_self | cost_collision_objects | cost_collision_border
             else:
@@ -254,12 +258,13 @@ class PlanningTask(Task):
         ###############################################################################################################
         # compute collisions on a finer interpolated trajectory
         trajs_interpolated = interpolate_traj_via_points(trajs_new, num_interpolation=num_interpolation)
+        #插值
         # Set 0 margin for collision checking, which means we allow trajectories to pass very close to objects.
         # While the optimized trajectory via points are not at a 0 margin from the object, the interpolated via points
         # might be. A 0 margin guarantees that we do not discard those trajectories, while ensuring they are not in
         # collision (margin < 0).
         trajs_waypoints_collisions = self.compute_collision(trajs_interpolated, margin=0.05)
-
+        #插值之后重新计算碰撞
         if trajs.ndim == 4:
             trajs_waypoints_collisions = einops.rearrange(trajs_waypoints_collisions, '(N B) H -> N B H', N=N, B=B)
 

@@ -12,13 +12,13 @@ from torch_robotics.torch_kinematics_tree.geometrics.skeleton import get_skeleto
 from torch_robotics.torch_kinematics_tree.geometrics.utils import link_pos_from_link_tensor, link_rot_from_link_tensor, \
     link_quat_from_link_tensor
 from torch_robotics.torch_kinematics_tree.models.robot_tree import convert_link_dict_to_tensor
-from torch_robotics.torch_kinematics_tree.models.robots import DifferentiableFrankaPanda
+from torch_robotics.torch_kinematics_tree.models.robots import DifferentiableFrankaPanda, DifferentiableFrankaPandaCar
 from torch_robotics.torch_planning_objectives.fields.distance_fields import interpolate_points_v1, CollisionSelfFieldWrapperSTORM
 from torch_robotics.torch_utils.torch_utils import to_numpy
 from torch_robotics.visualizers.plot_utils import plot_coordinate_frame
 
 
-class RobotPanda(RobotBase):
+class RobotPandaCar(RobotBase):
 
     def __init__(self,
                  use_self_collision_storm=False,
@@ -33,11 +33,12 @@ class RobotPanda(RobotBase):
         self.link_name_ee = 'ee_link'
         self.link_name_grasped_object = 'grasped_object'
 
-        self.diff_panda = DifferentiableFrankaPanda(
-            gripper=self.gripper, device=tensor_args['device'], grasped_object=grasped_object
+        self.diff_pandacar = DifferentiableFrankaPandaCar(
+             device=tensor_args['device']
         )
-
-        self.jl_lower, self.jl_upper, _, _ = self.diff_panda.get_joint_limit_array()#关节限制
+        self.jl_lower, self.jl_upper, _, _ = self.diff_pandacar.get_joint_limit_array()#关节限制
+        self.jl_lower = np.append(self.jl_lower, [0, 0])
+        self.jl_upper = np.append(self.jl_upper, [3.62, 8.2])#添加xy平移
         q_limits = torch.tensor(np.array([self.jl_lower, self.jl_upper]), **tensor_args)#在二维里qlimit是地图大小，在这里却成了关节限制
         #q_limits         tensor([[-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973],
         #                         [ 2.8973,  1.7628,  2.8973, -0.0698,  2.8973,  3.7525,  2.8973]],
@@ -55,6 +56,7 @@ class RobotPanda(RobotBase):
             # 'panda_link6',
             'panda_link7',
             'panda_hand',
+            'base_link'
             # self.link_name_ee,
         ]
         # these margins correspond to link_names_for_collision_checking
@@ -68,13 +70,13 @@ class RobotPanda(RobotBase):
             # 0.1,
             0.1,
             0.08,
-            # 0.025,
+            0.08,
         ]
         assert len(link_names_for_object_collision_checking) == len(link_margins_for_object_collision_checking)
 
         link_idxs_for_object_collision_checking = []
         for link_name in link_names_for_object_collision_checking:
-            idx = self.diff_panda._name_to_idx_map[link_name]
+            idx = self.diff_pandacar._name_to_idx_map[link_name]
             link_idxs_for_object_collision_checking.append(idx)
 
         #############################################
@@ -83,7 +85,7 @@ class RobotPanda(RobotBase):
             'panda_link4': ['panda_link1'],
             'panda_link5': ['panda_link0', 'panda_link1', 'panda_link2'],
             'panda_link6': ['panda_link0', 'panda_link1', 'panda_link2'],
-            'panda_hand': ['panda_link0', 'panda_link1', 'panda_link2'],
+            'panda_hand': ['panda_link0', 'panda_link1', 'panda_link2','base_link'],
         })
 
         # self collision due to grasped object
@@ -103,12 +105,12 @@ class RobotPanda(RobotBase):
 
         link_idxs_for_self_collision_checking = []
         for link_name in link_names_for_self_collision_checking:
-            idx = self.diff_panda._name_to_idx_map[link_name]
+            idx = self.diff_pandacar._name_to_idx_map[link_name]
             link_idxs_for_self_collision_checking.append(idx)
 
         #############################################
         super().__init__(
-            name='RobotPanda',
+            name='RobotPandaCar',
             q_limits=q_limits,
             grasped_object=grasped_object,
             link_names_for_object_collision_checking=link_names_for_object_collision_checking,
@@ -140,18 +142,20 @@ class RobotPanda(RobotBase):
         #q  一个点或者是一串点（轨迹）
 
         q_orig_shape = q.shape
+        #print("----------------------------------",q_orig_shape)
         if len(q_orig_shape) == 3:
             b, h, d = q_orig_shape
             q = einops.rearrange(q, 'b h d -> (b h) d')
         elif len(q_orig_shape) == 2:
             h = 1
             b, d = q_orig_shape
+
         else:
             raise NotImplementedError
 
-        link_pose_dict = self.diff_panda.compute_forward_kinematics_all_links(q, return_dict=True)
+        link_pose_dict = self.diff_pandacar.compute_forward_kinematics_all_links(q, return_dict=True)#这里用了q torch.Size([1000, 9])
         # link_tensor = convert_link_dict_to_tensor(link_pose_dict, self.link_names_for_object_collision_checking)
-        link_tensor = convert_link_dict_to_tensor(link_pose_dict, self.diff_panda.get_link_names())
+        link_tensor = convert_link_dict_to_tensor(link_pose_dict, self.diff_pandacar.get_link_names())
 
         # Transform collision points of the grasp object with the forward kinematics
         grasped_object_points_in_robot_base_frame = None
@@ -170,13 +174,32 @@ class RobotPanda(RobotBase):
                 grasped_object_points_in_robot_base_frame = einops.rearrange(grasped_object_points_in_robot_base_frame, "(b h) d1 d2 -> b h d1 d2", b=b, h=h)
             link_pos = torch.cat((link_pos, grasped_object_points_in_robot_base_frame), dim=-2)
         #print("link pos ==========",link_pos)
+
+        #print("linkpos----------,",link_pos.shape)
+        #print(q.shape)
+
+        A, B, C, D = link_pos.shape
+        if(A<=50 and b*h>1100):
+            #print("link pos ==========", link_pos)
+            q_reshaped = einops.rearrange(q, '(b h) d -> b h d', b=b,
+                                          h=h)
+            xy_offset = q_reshaped[:, :, -2:]
+            xy_offset_reshaped = xy_offset.view(b, h, 1, 2)
+        else:
+            xy_offset = q[:, -2:]  # 形状 [1000, 2]
+            xy_offset_reshaped = xy_offset.view(-1, 1, 1, 2)  # 新增维度以对齐 linkpos
+        zero_z = torch.zeros_like(xy_offset_reshaped[..., :1])  # 形状 [1000, 1, 1, 1]
+        full_offset = torch.cat([xy_offset_reshaped, zero_z], dim=-1)  # 形状 [1000, 1, 1, 3]
+
+        link_pos = link_pos + full_offset
+        #print(link_pos)
         return link_pos
 
-   # tensor([[[[0.0000, 0.0000, 0.0000],
+   # tensor([[[[0.0000, 0.0000, 0.0000],linkpos----------, torch.Size([1000, 1, 11, 3])
      #         [0.0000, 0.0000, 0.3330],
       #        [0.0000, 0.0000, 0.3330],
     def get_EE_pose(self, q):
-        return self.diff_panda.compute_forward_kinematics_all_links(q, link_list=[self.link_name_ee])
+        return self.diff_pandacar.compute_forward_kinematics_all_links(q, link_list=[self.link_name_ee])
 
     def get_EE_position(self, q):
         ee_pose = self.get_EE_pose(q)
@@ -192,11 +215,11 @@ class RobotPanda(RobotBase):
     def render(self, ax, q=None, color='blue', arrow_length=0.15, arrow_alpha=1.0, arrow_linewidth=2.0,
                draw_links_spheres=False, **kwargs):
         # draw skeleton
-        skeleton = get_skeleton_from_model(self.diff_panda, q, self.diff_panda.get_link_names())
+        skeleton = get_skeleton_from_model(self.diff_pandacar, q, self.diff_pandacar.get_link_names())
         skeleton.draw_skeleton(ax=ax, color=color)
 
         # forward kinematics
-        fks_dict = self.diff_panda.compute_forward_kinematics_all_links(q.unsqueeze(0), return_dict=True)
+        fks_dict = self.diff_pandacar.compute_forward_kinematics_all_links(q.unsqueeze(0), return_dict=True)
 
         # draw link collision points
         if draw_links_spheres:
