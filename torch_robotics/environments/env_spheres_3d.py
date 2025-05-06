@@ -15,31 +15,37 @@ class EnvSpheres3D(EnvBase):
         spheres = MultiSphereField(torch.tensor([
                     [1, 3.4, 0.2],
                     [1.45, 8, 0.3],
-                    [2.0, 6.0, 0.6],
-                    [2.55, 0.45, 0.5],
+                    [2.0, 6.0, 0.2],
+
+                    [2.55, 0.45, 0.1],
                     [0.65, 0.45, 0.15],
                     [1.75, 0.5, 0.25],
-                    [2.3, 5.0, 0.7],
+
+                    [2.3, 5.0, 0.1],
                     [2.5, 1.0, 0.3],
                     [0.1, 2.4, 1.0],
+
                     [1.1, 3.9, 0.35],
                     [1.6, 1.9, 0.1],
                     [1.3, 5.9, 0.1],
+
 
                     ]),
                 torch.tensor([
                     0.25,
                     0.15,
                     0.25,
+
                     0.25,
                     0.25,
                     0.15,
+
                     0.15,
                     0.15,
                     0.15,
                     0.15,
                     0.2,
-                    0.25
+                    0.15
                 ]),
                 tensor_args=tensor_args)
 
@@ -48,7 +54,7 @@ class EnvSpheres3D(EnvBase):
 
         super().__init__(
             name=name,
-            limits=torch.tensor([[0, 0, -0.3], [3.62, 8.2, 1]], **tensor_args),  # environments limits   前俩下标数值为平面限制限制，用于边界碰撞检测
+            limits=torch.tensor([[0, 0, -0.5], [3.62, 8.2, 1.5]], **tensor_args),  # environments limits   前俩下标数值为平面限制限制，用于边界碰撞检测
             obj_fixed_list=obj_list,
             tensor_args=tensor_args,
             **kwargs
@@ -56,10 +62,10 @@ class EnvSpheres3D(EnvBase):
 
     def get_gpmp2_params(self, robot=None):
         params = dict(
-            opt_iters=300,
+            opt_iters=100,
             num_samples=64,
             sigma_start=1e-3,
-            sigma_gp=1e-1,#1e-1
+            sigma_gp=1e-2,#1e-1
             sigma_goal_prior=1e-3,
             sigma_coll=5e-2,
             step_size=0.002,
@@ -109,6 +115,11 @@ if __name__ == '__main__':
     ax.set_ylabel('y')
     ax.set_zlabel('z')
     env.render(ax)
+
+    plt.show()
+    #q=torch.tensor([-0.3845, -0.6292, -2.7892, -1.5310, 0.6624, 1.2398, 0.1574])
+    #robot = RobotPanda(tensor_args={'device': 'cpu', 'dtype': torch.float32})
+    #robot.render(ax,q=q)
     plt.show()
 
     # Render sdf

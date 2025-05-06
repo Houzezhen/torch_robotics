@@ -222,7 +222,7 @@ class PandaMotionPlanningIsaacGymEnv:
         # gym arguments
         self.gym_args = gymutil.parse_arguments()
         self.gym_args.use_gpu_pipeline = use_pipeline_gpu
-        self.tensor_args = {'device': get_torch_device(device='cuda' if use_pipeline_gpu else 'cpu')}
+        self.tensor_args = {'device': get_torch_device(device='cuda:0' if use_pipeline_gpu else 'cpu')}
 
         self.sync_with_real_time = sync_with_real_time
 
@@ -410,7 +410,7 @@ class PandaMotionPlanningIsaacGymEnv:
         # point camera at middle env
         # cam_pos = gymapi.Vec3(1.75, 0, 1.25)
         # cam_target = gymapi.Vec3(-3, 0, -1.25)
-        cam_pos = gymapi.Vec3(2, 8,4.25)
+        cam_pos = gymapi.Vec3(2, 10,2.25)
         cam_target = gymapi.Vec3(2, -10, -8.25)
         #摄像头位置  摄像头朝向
         if len(self.envs) == 1:
@@ -551,10 +551,10 @@ class PandaMotionPlanningIsaacGymEnv:
 
         #添加xy平移
         xy_position = actions[...,7:9]
-        envs = self.envs
-        envs = self.envs * (self.num_envs-1)
+
+        envs1 = self.envs * (self.num_envs-1)
        # print(envs)
-        for k, (env,franka_handle) in enumerate(zip( envs,self.franka_handles)):
+        for k, (env,franka_handle) in enumerate(zip( envs1,self.franka_handles)):
           self.gym.refresh_rigid_body_state_tensor(self.sim)
           props = self.gym.get_actor_rigid_body_states(env, franka_handle, gymapi.STATE_POS)
           dx, dy = xy_position[k]
@@ -583,6 +583,7 @@ class PandaMotionPlanningIsaacGymEnv:
             if self.all_robots_in_one_env:
                 for contact in rigid_contacts:
                     body1_idx = contact[2]
+
                     env_idx = self.map_rigid_body_idxs_to_env_idx[body1_idx]
                     if env_idx in envs_with_robot_in_contact:
                         pass
@@ -664,8 +665,7 @@ class PandaMotionPlanningIsaacGymEnv:
         # Get current joint states
 
         joint_states_curr = gymtorch.wrap_tensor(self.gym.acquire_dof_state_tensor(self.sim)).view(self.num_envs, 9, 2)
-        #添加获取位置
-        #pos_state_curr = gymtorch.wrap_tensor(self.gym.acquire_rigid_body_state_tensor(self.sim).view(self.num_envs, 3, 2))
+        joint_states_curr[:-1, 7:9, 0] = actions[..., 7:9]
         if self.show_goal_configuration:
             joint_states_curr = joint_states_curr[:-1, ...]
 
@@ -689,7 +689,7 @@ class MotionPlanningController:
             self,
             trajectories,  # shape: (H, B, D)
             start_states_joint_pos=None, goal_state_joint_pos=None,
-            n_first_steps=0,
+            n_first_steps=10,
             n_last_steps=0,
             visualize=True,
             render_viewer_camera=False,
@@ -728,6 +728,11 @@ class MotionPlanningController:
             joint_states, envs_with_robot_in_contact = self.mp_env.step(actions, visualize=visualize, render_viewer_camera=render_viewer_camera)
             envs_with_robot_in_contact_l.append(envs_with_robot_in_contact)
             # stop the trajectory if the robots was in contact with the environments
+            if(i==len(trajectories_copy)-1):
+                for _ in range(20):
+                    self.mp_env.step(actions, visualize=visualize,
+                                                                            render_viewer_camera=render_viewer_camera)
+
             if len(envs_with_robot_in_contact) > 0:
                 if self.mp_env.controller_type == 'position':
                     trajectories_copy[i:, envs_with_robot_in_contact, :] = actions[envs_with_robot_in_contact, :]
@@ -795,7 +800,7 @@ if __name__ == '__main__':
     task = PlanningTask(
         env=env,
         robot=robot,
-        ws_limits=torch.tensor([[-1, -1, -1], [1, 1, 1]], **tensor_args),  # workspace limits
+        ws_limits=torch.tensor([[0, 0, -0.5], [3.62, 8.2, 1.5]], **tensor_args),  # workspace limits
         tensor_args=tensor_args
     )
 

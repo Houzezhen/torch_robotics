@@ -19,26 +19,18 @@
         <box size="0.67 0.55 0.5"/>
       </geometry>
     </collision>
-       <!-- 惯性参数（质量、转动惯量）-->
-    <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="5.0"/> <!-- 底座质量（kg）-->
-      <inertia
-        ixx="0.1" ixy="0" ixz="0"
-        iyy="0.1" iyz="0"
-        izz="0.1"/>
-    </inertial>
+
   </link>
   <link name="panda_link0">
   <origin rpy="0 0 0" xyz="0 0 0"/>
     <visual>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/visual/link0.dae"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/visual/link0.dae"/>
       </geometry>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/collision/link0.obj"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/collision/link0.obj"/>
       </geometry>
     </collision>
   </link>
@@ -50,12 +42,12 @@
   <link name="panda_link1">
     <visual>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/visual/link1.dae"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/visual/link1.dae"/>
       </geometry>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/collision/link1.obj"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/collision/link1.obj"/>
       </geometry>
     </collision>
   </link>
@@ -71,12 +63,12 @@
   <link name="panda_link2">
     <visual>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/visual/link2.dae"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/visual/link2.dae"/>
       </geometry>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/collision/link2.obj"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/collision/link2.obj"/>
       </geometry>
     </collision>
   </link>
@@ -92,12 +84,12 @@
   <link name="panda_link3">
     <visual>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/visual/link3.dae"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/visual/link3.dae"/>
       </geometry>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/collision/link3.obj"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/collision/link3.obj"/>
       </geometry>
     </collision>
   </link>
@@ -113,12 +105,12 @@
   <link name="panda_link4">
     <visual>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/visual/link4.dae"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/visual/link4.dae"/>
       </geometry>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/collision/link4.obj"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/collision/link4.obj"/>
       </geometry>
     </collision>
   </link>
@@ -137,12 +129,12 @@
   <link name="panda_link5">
     <visual>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/visual/link5.dae"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/visual/link5.dae"/>
       </geometry>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/collision/link5.obj"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/collision/link5.obj"/>
       </geometry>
     </collision>
   </link>
@@ -158,12 +150,12 @@
   <link name="panda_link6">
     <visual>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/visual/link6.dae"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/visual/link6.dae"/>
       </geometry>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/collision/link6.obj"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/collision/link6.obj"/>
       </geometry>
     </collision>
   </link>
@@ -181,12 +173,12 @@
   <link name="panda_link7">
     <visual>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/visual/link7.dae"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/visual/link7.dae"/>
       </geometry>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/collision/link7.obj"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/collision/link7.obj"/>
       </geometry>
     </collision>
   </link>
@@ -223,12 +215,12 @@
   <link name="panda_hand">
     <visual>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/visual/hand.dae"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/visual/hand.dae"/>
       </geometry>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://franka_panda_car/meshes/collision/hand.obj"/>
+        <mesh filename="package://home/ylc/mpd-public/deps/torch_robotics/torch_robotics/data/urdf/robots/franka_panda_car/meshes/collision/hand.obj"/>
       </geometry>
     </collision>
   </link>

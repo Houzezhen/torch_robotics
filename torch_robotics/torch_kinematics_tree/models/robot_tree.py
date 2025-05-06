@@ -296,6 +296,7 @@ class DifferentiableTree(torch.nn.Module):
 
         if link_list is None:  # link list is None again, output whole body
             link_list = self.get_link_names()
+            #print(link_list,"-----------------link_list-----------")
         if not return_dict:
             return convert_link_dict_to_tensor(pose_dict, link_list)
         else:

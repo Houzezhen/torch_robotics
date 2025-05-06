@@ -56,7 +56,7 @@ class RobotPandaCar(RobotBase):
             # 'panda_link6',
             'panda_link7',
             'panda_hand',
-            'base_link'
+            'base_link' #底座
             # self.link_name_ee,
         ]
         # these margins correspond to link_names_for_collision_checking
@@ -70,7 +70,7 @@ class RobotPandaCar(RobotBase):
             # 0.1,
             0.1,
             0.08,
-            0.08,
+            0.30,
         ]
         assert len(link_names_for_object_collision_checking) == len(link_margins_for_object_collision_checking)
 
@@ -83,8 +83,8 @@ class RobotPandaCar(RobotBase):
         # Robot collision model for self collision
         link_names_pairs_for_self_collision_checking = OrderedDict({
             'panda_link4': ['panda_link1'],
-            'panda_link5': ['panda_link0', 'panda_link1', 'panda_link2'],
-            'panda_link6': ['panda_link0', 'panda_link1', 'panda_link2'],
+            'panda_link5': ['panda_link0', 'panda_link1', 'panda_link2','base_link'],
+            'panda_link6': ['panda_link0', 'panda_link1', 'panda_link2','base_link'],
             'panda_hand': ['panda_link0', 'panda_link1', 'panda_link2','base_link'],
         })
 
@@ -145,6 +145,7 @@ class RobotPandaCar(RobotBase):
         #print("----------------------------------",q_orig_shape)
         if len(q_orig_shape) == 3:
             b, h, d = q_orig_shape
+            q_temp =q
             q = einops.rearrange(q, 'b h d -> (b h) d')
         elif len(q_orig_shape) == 2:
             h = 1
@@ -167,7 +168,12 @@ class RobotPandaCar(RobotBase):
 
         if len(q_orig_shape) == 3:
             link_tensor = einops.rearrange(link_tensor, "(b h) t d1 d2 -> b h t d1 d2", b=b, h=h)
-
+            #如果采集的不是目标点，而是轨迹，张量形状为三维
+            xy_offset = q_temp[:, :, -2:]
+            xy_offset_reshaped = xy_offset.view(b, h, 1, 2)
+        else:
+            xy_offset = q[:, -2:]  # 形状 [1000, 2]
+            xy_offset_reshaped = xy_offset.view(-1, 1, 1, 2)  # 新增维度以对齐 linkpos
         link_pos = link_pos_from_link_tensor(link_tensor)  # (batch horizon), taskspaces, x_dim
         if grasped_object_points_in_robot_base_frame is not None:
             if len(q_orig_shape) == 3:
@@ -178,16 +184,7 @@ class RobotPandaCar(RobotBase):
         #print("linkpos----------,",link_pos.shape)
         #print(q.shape)
 
-        A, B, C, D = link_pos.shape
-        if(A<=50 and b*h>1100):
-            #print("link pos ==========", link_pos)
-            q_reshaped = einops.rearrange(q, '(b h) d -> b h d', b=b,
-                                          h=h)
-            xy_offset = q_reshaped[:, :, -2:]
-            xy_offset_reshaped = xy_offset.view(b, h, 1, 2)
-        else:
-            xy_offset = q[:, -2:]  # 形状 [1000, 2]
-            xy_offset_reshaped = xy_offset.view(-1, 1, 1, 2)  # 新增维度以对齐 linkpos
+
         zero_z = torch.zeros_like(xy_offset_reshaped[..., :1])  # 形状 [1000, 1, 1, 1]
         full_offset = torch.cat([xy_offset_reshaped, zero_z], dim=-1)  # 形状 [1000, 1, 1, 3]
 

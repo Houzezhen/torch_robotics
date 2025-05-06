@@ -20,6 +20,8 @@ class EnvSimple2D(EnvBase):
                  **kwargs
                  ):
 
+        if tensor_args is None:
+            tensor_args = {'device': 'cuda:1', 'dtype': torch.float32}
         obj_list = [
             MultiSphereField(
                 np.array(
@@ -32,13 +34,13 @@ class EnvSimple2D(EnvBase):
                  #[0.628413736820221, -0.43461447954177856], [0.17965620756149292, -0.8926276564598083],
                  #[0.6775968670845032, 0.8817358016967773], [-0.3608766794204712, 0.8313458561897278],
                  [2,3],[1,5],[2,6],[3,1],[0.8,6],[0.2,2.5],[1.0,1.2],[2.0,2.0],[2.3,4],[1.8,1.2],[1,4],[0.2,8],[0.4,6.6],
-                [3.0,7.0],[2.5,5.0],
+                [3.0,7.0],[2.5,5.0],[2.93,2.5],[1.7,7.4],[3.,6.1],[3.26,4.]
                  ]),
                 np.array(
                 #[0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125,
                  #0.125,
                  #]
-                 [0.3,0.3,0.3,0.3,0.3,0.3,0.35,0.33,0.4,0.3,0.5,0.4,0.3,0.3,0.3]
+                 [0.3,0.1,0.3,0.3,0.3,0.3,0.35,0.33,0.1,0.3,0.2,0.4,0.3,0.3,0.3,0.3,0.3,0.35,0.2]
                 )
                 ,
                 tensor_args=tensor_args
@@ -92,13 +94,13 @@ class EnvSimple2D(EnvBase):
         params = dict(
             n_support_points=64,
             dt=0.04,
-            opt_iters=100,
+            opt_iters=200,
             num_samples=64,
             sigma_start=1e-5,
-            sigma_gp=1e-2,
+            sigma_gp=1e-3,
             sigma_goal_prior=1e-5,
-            sigma_coll=1e-4,
-            step_size=1e-3,
+            sigma_coll=5e-2,
+            step_size=1e-1,
             sigma_start_init=1e-4,
             sigma_goal_init=1e-4,
             sigma_gp_init=0.2,
@@ -142,7 +144,17 @@ if __name__ == '__main__':
         sdf_cell_size=0.01,
         tensor_args=DEFAULT_TENSOR_ARGS
     )
+    robot = RobotPointMass(tensor_args={'device': 'cpu', 'dtype': torch.float32})
+
     fig, ax = create_fig_and_axes(env.dim)
+    q = torch.tensor([2.0, 4.5])
+
+    # 渲染机器人（画一个表示机器人的圆）
+    #robot.render(ax, q=q, color='blue')
+    #start = torch.tensor([1.0, 2.0])
+    #goal = torch.tensor([3.5, 7.5])
+    #robot.render_trajectories(ax, start_state=start, goal_state=goal)
+    #plt.show()
     env.render(ax)
     plt.show()
 
